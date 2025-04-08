@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Conversor JSON para Markdown</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 40px;
+      background: #f4f4f4;
+    }
+    textarea, pre {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+      font-family: monospace;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #ecc9f8;
+    }
+    pre {
+      background: #fff;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Conversor JSON para Markdown</h1>
+  <textarea id="jsonInput" rows="20" placeholder="Cole aqui o JSON..."></textarea>
+  <br />
+  <button onclick="convertToMarkdown()">Converter</button>
+  <button onclick="copiarMarkdown()">Copiar Resultado</button>
+  <pre id="markdownOutput"></pre>
+
+  <script>
+    function convertToMarkdown() {
+      const input = document.getElementById('jsonInput').value;
+      const output = document.getElementById('markdownOutput');
+      try {
+        const data = JSON.parse(input);
+        let markdown = '';
+
+        if (Array.isArray(data.issues)) {
+          data.issues.forEach(item => {
+            let headersPrinted = false;
+            Object.entries(item).forEach(([key, value]) => {
+              if (["Key", "Project", "Sub-proyecto", "Componentes a Liberar"].includes(key)) return;
+              const displayValue = value === null || value === '' ? '' : String(value).replace(/\n/g, '<br>');
+              if (!headersPrinted && key === "Proyecto") {
+                markdown += `| ${key} | ${displayValue} |\n`;
+                markdown += '|------------|--------|\n';
+                headersPrinted = true;
+              } else {
+                markdown += `| ${key} | ${displayValue} |\n`;
+              }
+            });
+            markdown += '\n';
+          });
+        }
+
+        if (Array.isArray(data.componentes_modificados)) {
+          markdown += '\n| Componente | Versão |\n';
+          markdown += '|------------|--------|\n';
+          data.componentes_modificados.forEach(comp => {
+            const componente = comp.componente || '';
+            const version = comp.version || '';
+            markdown += `| ${componente} | ${version} |\n`;
+          });
+        }
+
+        output.textContent = markdown;
+      } catch (e) {
+        output.textContent = 'Erro ao converter JSON. Verifique o formato.';
+      }
+    }
+
+    function copiarMarkdown() {
+      const output = document.getElementById('markdownOutput');
+      navigator.clipboard.writeText(output.textContent)
+        .then(() => alert('Resultado copiado para a área de transferência!'))
+        .catch(err => alert('Erro ao copiar: ' + err));
+    }
+  </script>
+</body>
+</html>
